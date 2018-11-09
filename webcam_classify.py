@@ -47,7 +47,7 @@ def put_text(img, x, y, text, color):
     '''
     fontFace = cv2.FONT_HERSHEY_SIMPLEX
     fontScale = 1
-    thickness = 2
+    thickness = 2 #change thickness
     boxsize, baseline = cv2.getTextSize(text, fontFace, fontScale, thickness)
     cv2.putText(img, text, (x,y + boxsize[1]), fontFace, fontScale, color, thickness)
     
@@ -146,7 +146,9 @@ while True:
     # 3 Run classifier if needed
     if class_on:
         class_on = False # Only run the classifier once
-        label1, confidence1 = label0, confidence0
+        # The current classification becomes the previous classification
+        label1, confidence1 = label0, confidence0  
+        # Get the current classification
         label0, confidence0 = classify_result(hand, key)
         if label0:
             text0 = "Result  : '%s' with %d%% confidence" % (label0, confidence0)
@@ -168,10 +170,10 @@ while True:
     if sound_on:
         sound_on = False  # only play the audio file once per clasification
         if confidence0 >= 60:  # use this if we only accept high confidence classifications            
-            if c in ['a','b','c']:        
+            if c in ['a','b','c']:  # update this if we add new classes       
                 startfile(c + '.mp4')
             # TODO: For complex signals add elif which tests both label0 and label1 
-        
+            # elif label1 == 'NO1' and label0 == 'NO2':
 # Release resources        
 cam.release()
 cv2.destroyAllWindows()
