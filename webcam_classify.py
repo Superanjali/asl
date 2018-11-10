@@ -16,6 +16,9 @@ from os import startfile
 cv_blue = (255,0,0)
 cv_red = (0,0,255)
 cv_purple = (204,0,102)
+# Frame is just a black frame:
+background = blank_image = np.zeros((height,width,3), np.uint8)
+
 
 '''
 Filters to select skin color based on HSV color encoding
@@ -101,6 +104,14 @@ def select_skin(frame):
     
     output = cv2.bitwise_and(frame, frame, mask = mask)
     return output
+def insert_into(bigframe, smallframe, width, height, x, y):
+    ''' Resizes the smallframe to dimensions (Width,height)
+    Inserts smallframe into bigframe at the position x,y
+    '''
+    #Resize the insert to a specific size
+    resized = cv2.resize(smallframe, (width, height)) # width, height
+    # Insert the resized into bigframe
+    bigframe[y:y+height, x:x+width] = resized
 
 # %%
     
@@ -134,7 +145,8 @@ while True:
         #space pressed turn on classifier
         class_on =  not class_on
 
-    
+    background_text = background.copy()
+    insert_into(background_text, frame, 320, 240, 160, 120)
     '''
     h,w = frame.shape[:2]
     h,w = int(h/4), int(w/4)
@@ -169,11 +181,12 @@ while True:
     c = label0.lower()
     if sound_on:
         sound_on = False  # only play the audio file once per clasification
-        if confidence0 >= 60:  # use this if we only accept high confidence classifications            
-            if c in ['a','b','c']:  # update this if we add new classes       
-                startfile(c + '.mp4')
+        #if confidence0 >= 60:  # use this if we only accept high confidence classifications            
+        if c in ['a','b','c']:  # update this if we add new classes       
+            startfile(c + '.mp4')
             # TODO: For complex signals add elif which tests both label0 and label1 
-            # elif label1 == 'NO1' and label0 == 'NO2':
+        elif label1 == 'NO1' and label0 == 'NO2':
+            startfile('no.mp4')
 # Release resources        
 cam.release()
 cv2.destroyAllWindows()
