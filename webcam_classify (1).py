@@ -10,6 +10,7 @@ import numpy as np
 import requests
 import base64
 from os import startfile
+from timeit import default_timer as timer
 
 # Parameters ################################################################
 
@@ -123,7 +124,7 @@ confidence0, confidence1 = 0, 0
 label0, label1 = '', ''
 text0, text1 = '', '' 
 help_text = 'Press space to classify your hand sign'
-
+last_event = timer() - 20
 with open('key.txt') as f:
     key = f.read()
 
@@ -158,39 +159,38 @@ while True:
     if class_on:
         class_on = False # Only run the classifier once
         # The current classification becomes the previous classification
-        label1, confidence1 = label0, confidence0  
+        #label1, confidence1 = label0, confidence0  
         # Get the current classification
-        label0, confidence0 = classify_result(hand, key)
-        if label0:
-            text0 = "Result  : '%s' with %d%% confidence" % (label0, confidence0)
-        if label1:
-            text1 = "Previous: '%s' with %d%% confidence" % (label1, confidence1)
+        label, confidence = classify_result(hand, key)
+        if label:
+            text0 = "Translation  : '%s'" % (label)
+        if confidence:
+            text1 = "Confidence: '%s'" % (confidence)
         sound_on = True
 
     # 4 Display images and text 
-    
-    black_frame = np.zeros((480,640,3), np.uint8)
-    put_text(black_frame, 10, 10, help_text, cv_purple)
 
-    insert_into(black_frame, frame, 600, 450, 20, 15)
-    cv2.imshow("test", black_frame)
-    cv2.imshow("mask", hand)
     
-    put_text(frame, 10, 10, help_text, cv_purple)
+    put_text(black_frame, 10, 10, help_text, cv_purple)
     put_text(frame, 10, 40, text0, cv_red)
     put_text(frame, 10, 70, text1, cv_red)
     
-    insert_into(black_frame, frame, 600, 350, 5, 0)
+    insert_into(black_frame, frame, 300, 350, 105, 80)
     cv2.imshow("test", black_frame)
     cv2.imshow("mask", hand)
+    
+    time_passed = timer() - last_event
+
+  
     
     # 4 Play sound file if needed
     #c = chr(k)  # use this instead to test the sound files
     c = label0.lower()
     if sound_on:
         sound_on = False  # only play the audio file once per clasification
-        if confidence0 >= 60:  # use this if we only accept high confidence classifications            
-            if c in ['a','b','c']:  # update this if we add new classes       
+        #if confidence0 >= 60:  # use this if we only accept high confidence classifications            
+        if c in ['a','b','c','no1','no2']:  # update this if we add new classes 
+            if time_passed < 3:
                 startfile(c + '.mp4')
             # TODO: For complex signals add elif which tests both label0 and label1 
             # elif label1 == 'NO1' and label0 == 'NO2':

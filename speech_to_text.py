@@ -40,6 +40,6 @@ startfile('welcome2.mp4')
 
 language = 'en'
 
-for text in ['a','b','c']:
+for text in ['no']:
     myobj = gTTS(text= text, lang=language, slow=False) 
     myobj.save(text + '.mp4')
