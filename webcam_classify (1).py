@@ -15,8 +15,8 @@ import imageio
 
 # Parameters ################################################################
 
-cv_blue = (255,0,0)
-cv_red = (0,0,255)
+cv_blue = (255,145,81)
+cv_red = (255,255,255)
 cv_purple = (204,0,102)
 
 '''
@@ -36,8 +36,8 @@ l2_skin_hsv = np.array([165,0,70], dtype = 'uint8')
 h2_skin_hsv = np.array([179,180,255], dtype = 'uint8')
 
 cam = cv2.VideoCapture(0)
-cv2.namedWindow("test", cv2.WINDOW_NORMAL)
-cv2.resizeWindow('test', 640, 480)
+cv2.namedWindow("Mercury", cv2.WINDOW_NORMAL)
+cv2.resizeWindow('Mercury', 640, 480)
 cv2.namedWindow("mask", cv2.WINDOW_NORMAL)
 cv2.resizeWindow('mask', 640, 480)
 
@@ -58,9 +58,10 @@ def put_text(img, x, y, text, color):
     '''Write text on the image
     Modifies the paramter image. No return necessary
     '''
-    fontFace = cv2.FONT_HERSHEY_SIMPLEX
-    fontScale = 1
-    thickness = 2 #change thickness
+    #fontFace = cv2.FONT_HERSHEY_SIMPLEX
+    fontFace = cv2.FONT_HERSHEY_TRIPLEX
+    fontScale = 0.9
+    thickness = 1 #change thickness
     boxsize, baseline = cv2.getTextSize(text, fontFace, fontScale, thickness)
     cv2.putText(img, text, (x,y + boxsize[1]), fontFace, fontScale, color, thickness)
     
@@ -134,6 +135,7 @@ confidence0, confidence1 = 0, 0
 label0, label1 = '', ''
 text0, text1 = '', '' 
 help_text = 'Press space to classify your hand sign'
+welcome_text = "Welcome to Mercury"
 last_event = timer() - 20
 gif = None
 gif_counter = 0
@@ -186,12 +188,14 @@ while True:
             gif, nums = read_gif(c + '.gif')
             gif_counter = 0
         last_event = timer()
+       
         
     # 4 Display images and text 
     black_frame = np.zeros((480,640,3), np.uint8) 
-    black_frame[:] = (255, 204, 255)
-    
-    put_text(black_frame, 10, 10, help_text, cv_red)
+    black_frame[:] = cv_blue
+
+    put_text(black_frame, 150, 10, welcome_text, cv_red)    
+    put_text(black_frame, 10, 50, help_text, cv_red)
     put_text(black_frame, 10, 450, text0, cv_red)
     put_text(black_frame, 350, 450, text1, cv_red)
     
@@ -204,7 +208,7 @@ while True:
   
     
     insert_into(black_frame, frame, 400, 300, 20, 80)
-    cv2.imshow("test", black_frame)
+    cv2.imshow("Mercury", black_frame)
     cv2.imshow("mask", hand)
 
     
