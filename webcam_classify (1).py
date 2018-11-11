@@ -11,6 +11,7 @@ import requests
 import base64
 from os import startfile
 from timeit import default_timer as timer
+import imageio
 
 # Parameters ################################################################
 
@@ -114,6 +115,15 @@ def select_skin(frame):
     output = cv2.bitwise_and(frame, frame, mask = mask)
     return output
 
+def read_gif(gifname):
+    ## Read the gif from disk to `RGB`s using `imageio.miread` 
+    gif = imageio.mimread(gifname)
+    nums = len(gif)
+    print("Total %d frames in the gif!" % nums)
+    
+    # convert form RGB to BGR 
+    gif = [cv2.cvtColor(img, cv2.COLOR_RGB2BGR) for img in gif]
+    return gif, nums
 # %%
     
 # Main code ###################################################################
@@ -125,6 +135,9 @@ label0, label1 = '', ''
 text0, text1 = '', '' 
 help_text = 'Press space to classify your hand sign'
 last_event = timer() - 20
+gif = None
+gif_counter = 0
+
 with open('key.txt') as f:
     key = f.read()
 
@@ -167,31 +180,43 @@ while True:
         if confidence:
             text1 = "Confidence: '%s'" % (confidence)
         sound_on = True
-
+        
+        c = label.lower()
+        if c in ['a','b','c']:
+            gif, nums = read_gif(c + '.gif')
+            gif_counter = 0
+        last_event = timer()
+        
     # 4 Display images and text 
-
+    black_frame = np.zeros((480,640,3), np.uint8) 
+    black_frame[:] = (255, 204, 255)
     
-    put_text(black_frame, 10, 10, help_text, cv_purple)
-    put_text(frame, 10, 40, text0, cv_red)
-    put_text(frame, 10, 70, text1, cv_red)
-    
-    insert_into(black_frame, frame, 300, 350, 105, 80)
-    cv2.imshow("test", black_frame)
-    cv2.imshow("mask", hand)
+    put_text(black_frame, 10, 10, help_text, cv_red)
+    put_text(black_frame, 10, 450, text0, cv_red)
+    put_text(black_frame, 350, 450, text1, cv_red)
     
     time_passed = timer() - last_event
+    if gif and time_passed < 6:  # play gif for 6 seconds
+        gif_frame = gif[gif_counter]
+        gif_counter = (gif_counter + 1)%nums
+        insert_into(black_frame, gif_frame, 160, 160, 440, 220)
 
   
     
+    insert_into(black_frame, frame, 400, 300, 20, 80)
+    cv2.imshow("test", black_frame)
+    cv2.imshow("mask", hand)
+
+    
     # 4 Play sound file if needed
     #c = chr(k)  # use this instead to test the sound files
-    c = label0.lower()
+    c = label.lower()
     if sound_on:
+        print('|%s|' % c)
         sound_on = False  # only play the audio file once per clasification
         #if confidence0 >= 60:  # use this if we only accept high confidence classifications            
         if c in ['a','b','c','no1','no2']:  # update this if we add new classes 
-            if time_passed < 3:
-                startfile(c + '.mp4')
+            startfile(c + '.mp4')
             # TODO: For complex signals add elif which tests both label0 and label1 
             # elif label1 == 'NO1' and label0 == 'NO2':
 # Release resources        

@@ -10,15 +10,26 @@ import numpy as np
 import requests
 import base64
 from os import startfile
+from timeit import default_timer as timer
+import imageio
 
 # Parameters ################################################################
 
 cv_blue = (255,0,0)
 cv_red = (0,0,255)
 cv_purple = (204,0,102)
+
+height = 480
+width = 640
+
 # Frame is just a black frame:
 background = blank_image = np.zeros((height,width,3), np.uint8)
 
+gif = None
+gif_counter = 0
+
+#Set the timer of the last event to 20sec ago
+last_event = timer() - 20
 
 '''
 Filters to select skin color based on HSV color encoding
@@ -104,6 +115,7 @@ def select_skin(frame):
     
     output = cv2.bitwise_and(frame, frame, mask = mask)
     return output
+
 def insert_into(bigframe, smallframe, width, height, x, y):
     ''' Resizes the smallframe to dimensions (Width,height)
     Inserts smallframe into bigframe at the position x,y
@@ -112,6 +124,16 @@ def insert_into(bigframe, smallframe, width, height, x, y):
     resized = cv2.resize(smallframe, (width, height)) # width, height
     # Insert the resized into bigframe
     bigframe[y:y+height, x:x+width] = resized
+
+def read_gif(gifname):
+    ## Read the gif from disk to `RGB`s using `imageio.miread` 
+    gif = imageio.mimread(gifname)
+    nums = len(gif)
+    print("Total %d frames in the gif!" % nums)
+    
+    # convert form RGB to BGR 
+    gif = [cv2.cvtColor(img, cv2.COLOR_RGB2BGR) for img in gif]
+    return gif, nums
 
 # %%
     
@@ -167,26 +189,47 @@ while True:
         if label1:
             text1 = "Previous: '%s' with %d%% confidence" % (label1, confidence1)
         sound_on = True
+        
+        #Download the gif corresponding to the last label:
+        c = label0.lower()
+        if c in ['a','b','c']:
+            gif, nums = read_gif(c + '.gif')
+            gif_counter = 0
+        
+        #Set the time of the last event:
+        last_event = timer()
+    #END classification block
 
     # 4 Display images and text 
     put_text(frame, 10, 10, help_text, cv_purple)
     put_text(frame, 10, 40, text0, cv_red)
     put_text(frame, 10, 70, text1, cv_red)
+
+    #Add gif insertion if we have a gif and not too much time passed
+    time_passed = timer() - last_event
+    if gif and time_passed < 6:  # play gif for 10 seconds
+        gif_frame = gif[gif_counter]
+        gif_counter = (gif_counter + 1)%nums
+        insert_into(frame, gif_frame, 160, 160, 440, 280)
     
     cv2.imshow("test", frame)
     cv2.imshow("mask", hand)
     
-    # 4 Play sound file if needed
+    # 5 Play sound file if needed
     #c = chr(k)  # use this instead to test the sound files
     c = label0.lower()
     if sound_on:
         sound_on = False  # only play the audio file once per clasification
         #if confidence0 >= 60:  # use this if we only accept high confidence classifications            
         if c in ['a','b','c']:  # update this if we add new classes       
+            #pass
             startfile(c + '.mp4')
             # TODO: For complex signals add elif which tests both label0 and label1 
         elif label1 == 'NO1' and label0 == 'NO2':
+            pass
             startfile('no.mp4')
+            
+    
 # Release resources        
 cam.release()
 cv2.destroyAllWindows()
