@@ -59,8 +59,8 @@ def put_text(img, x, y, text, color):
     Modifies the paramter image. No return necessary
     '''
     #fontFace = cv2.FONT_HERSHEY_SIMPLEX
-    fontFace = cv2.FONT_HERSHEY_TRIPLEX
-    fontScale = 0.9
+    fontFace = cv2.FONT_HERSHEY_DUPLEX
+    fontScale = 0.75
     thickness = 1 #change thickness
     boxsize, baseline = cv2.getTextSize(text, fontFace, fontScale, thickness)
     cv2.putText(img, text, (x,y + boxsize[1]), fontFace, fontScale, color, thickness)
@@ -131,10 +131,9 @@ def read_gif(gifname):
 
 class_on, sound_on = False, False
 # 0 - represents the current classification, 1 - the previous classification
-confidence0, confidence1 = 0, 0
-label0, label1 = '', ''
+confidence, label = 0, ''
 text0, text1 = '', '' 
-help_text = 'Press space to classify your hand sign'
+help_text = 'Press the green button to classify your hand sign'
 welcome_text = "Welcome to Mercury"
 last_event = timer() - 20
 gif = None
@@ -152,12 +151,14 @@ while True:
 
     # 2 Check user input
     k = cv2.waitKey(1)
+    if k>0:
+       print(k, chr(k))
     if k%256 == 27:
         # ESC pressed
         print("Escape hit, closing...")
         break
 
-    if k ==  32:
+    if k ==  119:
         #space pressed turn on classifier
         class_on =  not class_on
 
@@ -199,6 +200,9 @@ while True:
     put_text(black_frame, 10, 450, text0, cv_red)
     put_text(black_frame, 350, 450, text1, cv_red)
     
+    logo = cv2.imread('mercury.jpg')
+    insert_into(black_frame, logo, 180, 50, 440, 80)
+   
     time_passed = timer() - last_event
     if gif and time_passed < 6:  # play gif for 6 seconds
         gif_frame = gif[gif_counter]
